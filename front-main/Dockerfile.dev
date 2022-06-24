@@ -1,0 +1,24 @@
+# Start from a Node.js image
+FROM node:18
+
+WORKDIR /app
+
+# Add node_modules in our PATH
+ENV PATH /app/node_modules/.bin:$PATH
+
+ENV CHOKIDAR_USEPOLLING=true
+
+# Install needed modules
+COPY package.json ./
+COPY package-lock.json ./
+RUN npm install
+
+# Get the source code
+COPY . ./
+
+RUN chown -R node /app/node_modules
+
+# Start the web app on port 3000
+EXPOSE 3000
+CMD ["npm", "start"]
+
