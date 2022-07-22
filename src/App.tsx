@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import './App.css';
 import Register from './components/signUp';
 import Campagne from './components/campagne';
@@ -7,11 +7,11 @@ import Personnage from './components/personnage'
 import Profil from './components/profil';
 import Fiche from './components/ficheperso'
 import Fichednd from './components/fichepersodnd'
-import {BrowserRouter as Router, Routes, Route, Link} from "react-router-dom";
+import {BrowserRouter as Router, Routes, Route, Link, useNavigate} from "react-router-dom";
+import { getAuth} from "firebase/auth";
 
-function useState(arg0: string): [any, any] {
-  throw new Error('Function not implemented.');
-}
+
+
 
 function App() {
   return (   

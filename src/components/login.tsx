@@ -9,9 +9,11 @@ function Login() {
   let navigate = useNavigate(); 
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  
   const signin = async () => {
     try {
       const user = await signInWithEmailAndPassword(auth, email, password)
+      
       let path = `/campagne`;
       navigate(path);
     }
@@ -49,8 +51,8 @@ function Login() {
               <input className='border border-black absolute w-96 h-16 pl-12 right-12 top-52'  onChange={e => setPassword(e.target.value)} name="mdp" type="password" style={{background: "#FFFFFF", borderRadius: "12px"}}></input>
               <svg className='absolute h-10 w-10 right-96 top-56' style={{color:"black"}}  xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
           <Link to="/signup"><p className='absolute w-80 h-8 right-20 bottom-20' style={{textDecorationLine: "underline"}}>Créer son compte</p></Link>
-          <button className='absolute w-80 h-14 right-20 bottom-52' style={{background: "rgb(255, 0, 0)", borderRadius: "20px"}}  onClick={() => signin()}>Connexion</button>
-          <button className='absolute w-80 h-14 right-20 bottom-32' style={{background: "rgb(255, 0, 0)", borderRadius: "20px"}}  onClick={() => LogWithGoogle()}>Se connecter avec Google</button>
+          <button className='absolute w-80 h-14 right-20 bottom-52' style={{background: "rgb(255, 0, 0)", borderRadius: "20px", color:"white"}}  onClick={() => signin()}>Connexion</button>
+          <button className='absolute w-80 h-14 right-20 bottom-32 border-4 border-red-500 ' style={{ borderRadius: "20px"}}  onClick={() => LogWithGoogle()}>Se connecter avec Google</button>
         </div>
       </div>
     </div>    
