@@ -1,22 +1,37 @@
-import React from 'react';
-import Campagne from './campagne';
-import {BrowserRouter as Router, Routes, Route, Link, useNavigate} from "react-router-dom";
+import Delete from "../images/x-button.png"
+import Params from "../images/adjust.png"
 
-export default function Cards() {
-
-
-    return (
-        <Link to="/personnage"><div className="max-w-sm rounded overflow-hidden shadow-lg">
-            <div className="px-6 py-4">
-                <div className="font-bold text-xl mb-2">
-                    titre
-                </div>
-                <p className="text-gray-700 text-base">
-                    image en fond
-                </p>
-            </div>
-            
-        </div></Link>
-    )
+export default function Cards(props: any) {
+  return (
+    <div className="px-10 py-4 text-center m-auto">
+      <div className="grid grid-cols-2">
+        <div className="text-left">
+          <button onClick={() => props.handleDelete(props.campagne.id)}>
+            <img src={Delete} width="30"></img>
+          </button>
+        </div>
+        <div className="text-right">
+          <button onClick={() => props.handleUpdate(props)}>
+            <img src={Params} width="30"></img>
+          </button>
+        </div>
+      </div>
+      <div className="font-bold text-xl mb-2">
+        <div className="text-red-600">
+          Titre: {props.campagne.name}
+        </div>
+        <br />
+        <div>
+          Nom de la campagne:
+        </div>
+        {props.campagne.description}
+        <br />
+        <br />
+        <div>
+          Type: {props.campagne.type}
+        </div>
+        {props.campagne.personnages}
+      </div>
+    </div>
+  )
 }
-

@@ -32,11 +32,6 @@ const Signout =  () => {
   }
   return (
     <div className="App">
-      <div className='absolute w-full h-24 left-11/12 top-0' style={{background: "#00487C"}}>
-        <img className='basis-1/5 absolute w-50 h-full  left-0 top-0' src="https://i.goopics.net/c2girn.png"></img>
-        <Link to="/profil"><p className='basis-2/5 absolute w-2/12 h-10 left-32 top-6 text-3xl'>Profil</p></Link>
-        <button onClick={Signout}><p className='basis-5/5 absolute w-2/12 h-10 left-3/4 top-6 text-3xl'>Déconnexion</p></button>
-      </div>
       <h1 className='absolute w-11/12 h-92 top-32 font-normal text-6xl leading-10 text-center' style={{color: "#FFFFFF"}}>Vos personnages</h1>
       <button className='button' onClick={() => setShowForm(true)}>Créer un nouveau personnage</button>
       {showForm ? (

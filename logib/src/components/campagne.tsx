@@ -1,26 +1,50 @@
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import axios from 'axios';
-import {BrowserRouter as Router, Routes, Route, Link, useNavigate} from "react-router-dom";
-import { signInWithEmailAndPassword, getAuth, signOut } from "@firebase/auth";
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
+import { getAuth, signOut, onAuthStateChanged } from "@firebase/auth";
 import Cards from "./cards"
 import { useState } from 'react';
+import ModalCampaignForm from './modalCampaignForm';
+import ModalUpdateCampaignForm from './modalUpdateCampaignForm';
 
 
 function Campagne() {
-  const [showForm, setShowForm] = useState(false);
-  let navigate = useNavigate(); 
+  const [idMj, setIdMj] = useState("")
+  const [campaign, setCampaign] = useState([])
+  const [nameCampaign, setNameCampaign] = useState('');
+  const [destCampaign, setdestCampaign] = useState('');
+  const [nameUpdateCampaign, setUpdateNameCampaign] = useState('');
+  const [destUpdateCampaign, setUpdatedestCampaign] = useState('');
+  const [nbPlayer, setNbPlayer] = useState('');
+  const [motorGame, setMotorGame] = useState('');
+  const [showModal, setShowModal] = useState(false)
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
+  const [updateCampaignInfo, setUpdateCampaignInfo] = useState({})
+  const [currentCampaignId, setCurrentCampaignId] = useState('')
+  let navigate = useNavigate();
+
   useEffect(() => {
-    var user = getAuth().currentUser;
-    if (user) {
-    // User is signed in.
-  } else {
-    window.alert("Vous n'êtes pas connecté, accès refusé");
-    let path = `/`;
-    navigate(path);
-  }
+    var auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log(user.uid)
+        setIdMj(user.uid)
+        const getCampaign = async () => {
+          const data = await axios(`http://localhost:3000/api/campaign/${user.uid}`)
+          setCampaign(data.data)
+        }
+        getCampaign().catch(console.error)
+        // User is signed in.
+      } else {
+        window.alert("Vous n'êtes pas connecté, accès refusé");
+        let path = `/`;
+        navigate(path);
+      }
+    })
+    console.log(campaign)
   }, []);
 
-const Signout =  () => {
+  const Signout = () => {
     const auth = getAuth();
     signOut(auth).then(() => {
       console.log(auth)
@@ -31,123 +55,185 @@ const Signout =  () => {
     });
   }
 
-  const [showCard, setShowCard] = useState(false);
+  //@ts-ignore
+  const createCampaign = async (campaignForm) => {
+    let createdCampaign = {
+      name: campaignForm.nameCampaign,
+      idMj: idMj,
+      description: campaignForm.destCampaign,
+      type: campaignForm.motorGame,
+      image: 'test',
+      personnages: nbPlayer
+    }
+    try {
+      axios.post('http://localhost:3000/api/campaign',
+        { name: campaignForm.nameCampaign, idMj: idMj, description: campaignForm.destCampaign, type: campaignForm.motorGame, image: 'test', personnages: nbPlayer })
+        .then(res => {
+          console.log(res);
+          //@ts-ignore
+          setCampaign([...campaign, createdCampaign])
+        })
+    }
+    catch (error) {
+      console.log('error', error);
+    }
+  }
 
-  const [nameCampaign, setNameCampaign] = useState('');
-  const [destCampaign, setdestCampaign] = useState('');
-  const [nbPlayer, setNbPlayer] = useState('');
-  const [motorGame, setMotorGame] = useState('');
+  const deleteCampaign = async (id: String) => {
+    console.log("ID to delete", id)
+    try {
+      axios.delete(`http://localhost:3000/api/campaign/${id}`)
+        .then(res => {
+          const indexOfObject = campaign.findIndex(object => {
+            // @ts-ignore
+            return object.id === id;
+          })
+          campaign.splice(indexOfObject, 1)
+          console.log("after slice", campaign)
+          //@ts-ignore
+          setCampaign(current => current.filter(campaign => { return campaign.id !== id }))
+        })
+    } catch (error) {
+      console.log("error when delete", error)
+    }
+  }
 
-  const handleSubmit = (event: { preventDefault: () => void; }) => {
+  const handleUpdate = (campaignInfo: any) => {
+    console.log("CAMPAIGNINFO", campaignInfo)
+    let info = {
+      name: campaignInfo.campagne.nameUpdateCampaign,
+      idMj: idMj,
+      id: campaignInfo.campagne.id,
+      description: campaignInfo.campagne.destUpdateCampaign,
+    }
+    setUpdateCampaignInfo(info)
+    setShowUpdateModal(true)
+    setUpdateNameCampaign(info.name)
+    setUpdatedestCampaign(info.description)
+    setCurrentCampaignId(info.id)
+
+  }
+
+  const updateCampaign = async (id: String, updateForm: any) => {
+    console.log("RES", updateForm)
+    let updateCampaign = {
+      name: updateForm.nameUpdateCampaign,
+      idMj: idMj,
+      description: updateForm.destUpdateCampaign,
+      image: 'test',
+    }
+    try {
+      axios.post(`http://localhost:3000/api/campaign/${id}`, { name: updateCampaign.name, description: updateCampaign.description, idMj: idMj })
+        .then(res => {
+          const indexOfObject = campaign.findIndex(object => {
+            // @ts-ignore
+            return object.id === id;
+          })
+          console.log("RES", indexOfObject)
+          console.log("UPD", res)
+
+          const savedCampaign = [...campaign]
+          //@ts-ignore
+          savedCampaign[indexOfObject].name = updateCampaign.name
+          //@ts-ignore
+          campaign[indexOfObject].description = updateCampaign.description
+          console.log(campaign[indexOfObject])
+          console.log("all cmp", campaign)
+          setCampaign(savedCampaign)
+        })
+    }
+    catch (error) {
+      console.log("error to update", error)
+    }
+  }
+
+  //@ts-ignore
+  const handleSubmit = (event) => {
+    const campaign = { nameCampaign, destCampaign, motorGame }
+    createCampaign(campaign)
     event.preventDefault();
-
-    console.log('nameCampaign', nameCampaign);
-    console.log('destCampaign', destCampaign);
-    console.log('nbplayer', nbPlayer);
-    console.log('motorGame', motorGame);
-
     setNameCampaign('');
     setdestCampaign('');
     setNbPlayer('');
     setMotorGame('');
+    // setImg('');
+    event.target.reset();
+    console.log('nameCampaign', nameCampaign);
+
+    setShowModal(false);
+  }
+
+  //@ts-ignore
+  const handleSubmitUpdate = (event) => {
+    const campaign = { nameUpdateCampaign, destUpdateCampaign }
+    console.log(currentCampaignId)
+    updateCampaign(currentCampaignId, campaign)
+    closeUpdateModal()
+  }
+
+  const closeUpdateModal = () => {
+    setShowUpdateModal(false)
+    setUpdatedestCampaign("")
+    setUpdateNameCampaign("")
   }
   return (
     <div className="App">
-      <div className='absolute w-full h-24 left-11/12 top-0' style={{background: "#00487C"}}>
-        <img className='basis-1/5 absolute w-50 h-full  left-0 top-0' src="https://i.goopics.net/c2girn.png"></img>
-        <Link to="/profil"><p className='basis-2/5 absolute w-2/12 h-10 left-32 top-6 text-3xl'>Profil</p></Link>
-        <button onClick={Signout}><p className='basis-5/5 absolute w-2/12 h-10 left-3/4 top-6 text-3xl'>Déconnexion</p></button>
-      </div>
-      <h1 className='absolute w-11/12 h-92 top-32 font-normal text-6xl leading-10 text-center' style={{color: "#FFFFFF"}}>Vos campagnes</h1>
-      <button className='button' onClick={() => setShowForm(true)}>Créer une nouvelle campagne</button>
-      {showForm ? (
-        <div className="flex justify-center items-center overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-          <div className="relative w-auto my-6 mx-auto max-w-3xl">
-            <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-              <div className="flex items-start justify-between p-5 border-b border-solid border-gray-300 rounded-t ">
-              <h3 className="text-3xl font=semibold">Création d'une campagne</h3>
-                <button
-                  className="bg-transparent border-0 text-black float-right"
-                  onClick={() => setShowForm(false)}
-                >
-                </button>
-              </div>
-              <div className="relative p-6 flex-auto">
-                <form className="bg-gray-200 shadow-md rounded px-8 pt-6 pb-8 w-full" onSubmit={handleSubmit}>
-                  <div className="block text-black text-sm font-bold mb-1">
-                    Nom de la campagne
-                  </div>
-                  <input className="shadow appearance-none border rounded w-full py-2 px-1 text-black text-sm font-bold mb-1 text-center" type="text" id='nameCampaign' name='nameCampaign'
-                    onChange={event => setNameCampaign(event.target.value)} value={nameCampaign}
-                  />
-                  <div className="block text-black text-sm font-bold mb-1">
-                    Description de la campagne
-                  </div>
-                  <input className="shadow appearance-none border rounded w-full py-2 px-1 text-black text-sm font-bold mb-1 text-center" type="text" id='nameCampaign' name='nameCampaign'
-                    onChange={event => setdestCampaign(event.target.value)} value={destCampaign}
-                  />
-                  <div className="block text-black text-sm font-bold mb-1">
-                    Nombre de joueurs
-                  </div>
-                  {/* <input className="shadow appearance-none border rounded w-full py-2 px-1 text-black text-sm font-bold mb-1" type="text" id='nameCampaign' name='nameCampaign'
-                    onChange={event => setNbPlayer(event.target.value)} value={nbPlayer}
-                  /> */}
-                  <select className='text-sm shadow appearance-none border rounded w-full py-2 px-1 text-black text-center'>
-                    <option>1</option>
-                    <option>2</option>
-                    <option>3</option>
-                    <option>4</option>
-                  </select>
-                  <div className="block text-black text-sm font-bold mb-1">
-                    Moteur de jeu
-                  </div>
-                  {/* <input className="shadow appearance-none border rounded w-full py-2 px-1 text-black text-sm font-bold mb-1 text-center" type="text" id='nameCampaign' name='nameCampaign'
-                    onChange={event => setMotorGame(event.target.value)} value={motorGame}
-                  /> */}
-                  <select className='text-sm shadow appearance-none border rounded w-full py-2 px-1 text-black text-center'>
-                    <option>Knight</option>
-                    <option>D&D</option>
-                  </select>
-                  <div className="block text-black text-sm font-bold mb-1">
-                    Image de la campagne
-                  </div>
-                  <input className="shadow appearance-none border rounded w-full py-2 px-1 text-black text-sm font-bold mb-1" type="text" id='nameCampaign' name='nameCampaign'
-                    onChange={event => setNameCampaign(event.target.value)} value={nameCampaign}
-                  />
-                  <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                    <button
-                      className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1"
-                      type="button"
-                      onClick={() => setShowForm(false)}
-                    >
-                      Fermer
-                    </button>
-                    <button
-                      className="text-white bg-yellow-300 active:bg-yellow-400 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1"
-                      type="submit"
-                      onClick={() => { setShowCard(true); setShowForm(false) }}
-                    >
-                      Créer une nouvelle campagne
-                    </button>
-                  </div>
-                </form>
-              </div>
+      <h1 className='absolute w-11/12 h-92 top-32 font-normal text-6xl leading-10 text-center text-black'>Vos campagnes</h1>
+      <button className='button' onClick={() => setShowModal(true)}>Créer une nouvelle campagne</button>
+      {
+        showModal ?
+          <ModalCampaignForm
+            //@ts-ignore
+            setShowModal={setShowModal}
+            handleSubmit={handleSubmit}
+            nameCampaign={nameCampaign}
+            setNameCampaign={setNameCampaign}
+            setdestCampaign={setdestCampaign}
+            destCampaign={destCampaign}
+            setMotorGame={setMotorGame}
+            motorGame={motorGame}
+            setNbPlayer={setNbPlayer}
+            nbPlayer={nbPlayer}
+          /> : null
+      }
+      {
+        showUpdateModal ?
+          <ModalUpdateCampaignForm
+            //@ts-ignore
+            setShowModal={setShowUpdateModal}
+            handleSubmitUpdate={handleSubmitUpdate}
+            updateCampaign={updateCampaign}
+            updateCampaignInfo={updateCampaignInfo}
+            nameUpdateCampaign={nameUpdateCampaign}
+            setUpdateNameCampaign={setUpdateNameCampaign}
+            destUpdateCampaign={destUpdateCampaign}
+            setUpdatedestCampaign={setUpdatedestCampaign}
+            closeUpdateModal={closeUpdateModal}
+
+          /> : null
+      }
+      <div className='grid grid-cols-5 gap-5 px-5 py-10'>
+        {/* @ts-ignore */}
+        {campaign && campaign.map((item) => {
+          return (
+            <div className='mt-10 bg-gray-200 rounded-2xl m-auto'>
+              {/*@ts-ignore */}
+              {/* <Link to={`/Personnage/${item.id}`}> */}
+              <Cards
+                // @ts-ignore
+                campagne={item}
+                handleDelete={deleteCampaign}
+                handleUpdate={handleUpdate}
+                setCurrentCampaignId={setCurrentCampaignId}
+              />
+              {/* </Link> */}
+              <br />
             </div>
-          </div>
-        </div>
-      ) : null}
-      {showCard ? (
-        <div className='grid gap-15 grid-cols-3 grid-rows-3 mt-10'>
-          <button>
-            <Cards></Cards>
-          </button>
-        </div>
-      ) : null}
+          )
+        })}
+      </div>
 
     </div>
   );
 }
 export default Campagne;
-
-
-
